@@ -1,0 +1,8 @@
+.canvas-render[data-ink-selection] :is(.App-menu__left, .App-mobile-menu) > .panelColumn
+    > div:has([data-testid="color-top-pick-transparent"]),
+.canvas-render[data-ink-selection] :is(.App-menu__left, .App-mobile-menu) > .panelColumn
+    > fieldset:has([data-testid="fill-hachure"]),
+.canvas-render[data-ink-selection] :is(.App-menu__left, .App-mobile-menu) > .panelColumn
+    > fieldset:has(.zIndexButton) + fieldset:has([style*="flex-basis"]) {
+    display: none;
+}

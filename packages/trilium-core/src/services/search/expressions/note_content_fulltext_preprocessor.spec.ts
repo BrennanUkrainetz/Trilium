@@ -37,6 +37,35 @@ describe("Canvas preprocessing", () => {
         expect(preprocessContent(`{ "elements": [ { "type": "text", "text": "Hello" } ] }`, type, mime)).toEqual("hello");
         expect(preprocessContent(`{ "elements": [ { "type": "text" }, { "type": "text", "text": "World" }, { "type": "rectangle", "text": "Ignored" } ] }`, type, mime)).toEqual("world");
     });
+
+    it("reads the unwrapped text, so a word broken by wrapping matches", () => {
+        // Excalidraw breaks a word longer than the text box in the middle.
+        const scene = { elements: [ { type: "text", text: "extraordin\nary", originalText: "extraordinary" } ] };
+        expect(preprocessContent(JSON.stringify(scene), type, mime)).toEqual("extraordinary");
+    });
+
+    it("joins the lines of multi-line text with spaces", () => {
+        const scene = { elements: [ { type: "text", text: "first\nsecond", originalText: "first\nsecond" } ] };
+        expect(preprocessContent(JSON.stringify(scene), type, mime)).toEqual("first second");
+    });
+
+    it("skips deleted elements", () => {
+        const scene = { elements: [ { type: "text", text: "Gone", isDeleted: true }, { type: "text", text: "Kept" } ] };
+        expect(preprocessContent(JSON.stringify(scene), type, mime)).toEqual("kept");
+    });
+
+    it("reads the text of rich text boxes and of nothing else embedded", () => {
+        const scene = { elements: [
+            { type: "embeddable", link: "trilium:rich-text", customData: { triliumRichText: { html: "<p><b>Bold</b> &amp; <span style=\"color:red\">red</span></p><ul><li>item</li></ul>" } } },
+            { type: "embeddable", link: "root/abc123", customData: { triliumRichText: { html: "<p>not a box</p>" } } }
+        ] };
+        expect(preprocessContent(JSON.stringify(scene), type, mime)).toEqual("bold & red item");
+    });
+
+    it("reads frame names", () => {
+        const scene = { elements: [ { type: "frame", name: "Meeting notes" }, { type: "frame", name: null }, { type: "text", text: "Agenda" } ] };
+        expect(preprocessContent(JSON.stringify(scene), type, mime)).toEqual("meeting notes agenda");
+    });
 });
 
 describe("Reference-link & link-preview searchability", () => {

@@ -3,10 +3,16 @@ import { type ComponentChildren, type RefObject, render } from "preact";
 import { act } from "preact/test-utils";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import type { TypeWidgetProps } from "../type_widget";
 import type { CanvasEditorProps } from "./Canvas";
 
 const excalidrawProps = vi.fn((_props: ExcalidrawProps) => undefined);
 const options = vi.hoisted(() => ({ canvasThinStroke: false }));
+const page = vi.hoisted(() => ({
+    colorScheme: "dark" as "light" | "dark",
+    paperLabel: null as string | null
+}));
+const persistenceThemes = vi.hoisted(() => [] as string[]);
 vi.mock("@excalidraw/excalidraw", () => ({
     Excalidraw: (props: ExcalidrawProps) => {
         excalidrawProps(props);
@@ -19,11 +25,30 @@ vi.mock("@excalidraw/excalidraw", () => ({
 }));
 vi.mock("../../react/hooks/options", async (importOriginal) => ({
     ...(await importOriginal<typeof import("../../react/hooks/options")>()),
+    useColorScheme: () => page.colorScheme,
     useTriliumOption: () => [ "en" ],
     useTriliumOptionBool: (name: keyof typeof options) => [ options[name] ]
 }));
 
-const { CanvasEditor, getExcalidrawAssetPath } = await import("./Canvas");
+vi.mock("../../react/hooks/note", async (importOriginal) => ({
+    ...(await importOriginal<typeof import("../../react/hooks/note")>()),
+    useNoteLabel: (_note: unknown, name: string) =>
+        [ name === "canvasPaper" ? page.paperLabel : null, vi.fn() ]
+}));
+vi.mock("../../react/hooks/note_context", async (importOriginal) => ({
+    ...(await importOriginal<typeof import("../../react/hooks/note_context")>()),
+    useEffectiveReadOnly: () => false
+}));
+vi.mock("./persistence", async (importOriginal) => ({
+    ...(await importOriginal<typeof import("./persistence")>()),
+    default: (_note: unknown, _noteContext: unknown, _apiRef: unknown, theme: string) => {
+        persistenceThemes.push(theme);
+        return {};
+    }
+}));
+vi.mock("./CanvasDrawingMenu", () => ({ CanvasNoteMenu: () => null }));
+
+const { default: Canvas, CanvasEditor, getExcalidrawAssetPath } = await import("./Canvas");
 
 describe("CanvasEditor", () => {
     let container: HTMLElement;
@@ -141,6 +166,42 @@ describe("CanvasEditor", () => {
         options.canvasThinStroke = false;
         await mount({ isReadOnly: true });
         expect(getFactor()).toBe(1);
+    });
+});
+
+describe("Canvas", () => {
+    let container: HTMLElement;
+
+    beforeEach(() => {
+        excalidrawProps.mockClear();
+        persistenceThemes.length = 0;
+        container = document.createElement("div");
+        document.body.appendChild(container);
+    });
+
+    afterEach(() => {
+        render(null, container);
+        container.remove();
+    });
+
+    async function mount(colorScheme: "light" | "dark", paperLabel: string | null) {
+        page.colorScheme = colorScheme;
+        page.paperLabel = paperLabel;
+        const props = { note: {}, noteContext: undefined } as unknown as TypeWidgetProps;
+        await act(async () => {
+            render(<Canvas {...props} />, container);
+        });
+        return {
+            editorTheme: excalidrawProps.mock.lastCall?.[0].theme,
+            loadTheme: persistenceThemes.at(-1)
+        };
+    }
+
+    it("draws and loads a white page in the light theme, also in the dark theme", async () => {
+        expect(await mount("dark", "white")).toEqual({ editorTheme: "light", loadTheme: "light" });
+        expect(await mount("light", "white")).toEqual({ editorTheme: "light", loadTheme: "light" });
+        expect(await mount("dark", null)).toEqual({ editorTheme: "dark", loadTheme: "dark" });
+        expect(await mount("dark", "blue")).toEqual({ editorTheme: "dark", loadTheme: "dark" });
     });
 });
 

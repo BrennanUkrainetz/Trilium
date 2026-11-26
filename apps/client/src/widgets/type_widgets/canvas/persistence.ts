@@ -35,6 +35,8 @@ import {
 import {
     buildNewImageAttachments, CANVAS_EXPORT_TITLE, IMAGE_ROLE, loadImageAttachments, loadImageFiles
 } from "./image_attachments";
+import { isPreviewingInsertSpace } from "./insert_space";
+import { getOpenedAppState } from "./page_layout";
 import { schedulePicture, watchPictures } from "./picture_schedule";
 
 interface AttachmentMetadata {
@@ -72,7 +74,11 @@ const DRAWING_PICTURE_DELAY = 30000;
 /** The space around the shapes in the picture of a drawing, in scene units. */
 const PICTURE_PADDING = 5;
 
-export default function useCanvasPersistence(note: FNote, noteContext: NoteContext | null | undefined, apiRef: RefObject<ExcalidrawImperativeAPI | null>, theme: AppState["theme"], isReadOnly: boolean): Partial<ExcalidrawProps> {
+/**
+ * Loads and saves the canvas note `note`. With `isPageMode`, the note opens at the top-left corner
+ * of its page instead of its saved scroll.
+ */
+export default function useCanvasPersistence(note: FNote, noteContext: NoteContext | null | undefined, apiRef: RefObject<ExcalidrawImperativeAPI | null>, theme: AppState["theme"], isReadOnly: boolean, isPageMode = false): Partial<ExcalidrawProps> {
     const libraryChanged = useRef(false);
 
     /**
@@ -157,9 +163,12 @@ export default function useCanvasPersistence(note: FNote, noteContext: NoteConte
             initialSceneAppliedRef.current = expectedSceneVersion === 0;
             initialDataResolvedRef.current = true;
 
+            const appState = isPageMode
+                ? getOpenedAppState(content.appState, elements, false)
+                : content.appState;
             initialData.resolve({
                 elements,
-                appState: { ...content.appState, theme },
+                appState: { ...appState, theme },
                 files,
                 libraryItems: libraryResult.libraryItems
             });
@@ -192,9 +201,13 @@ export default function useCanvasPersistence(note: FNote, noteContext: NoteConte
 
         // The note this load run belongs to; async results below are ignored if it's superseded.
         const loadedNoteId = note.noteId;
+        const isReload = activeNoteIdRef.current === loadedNoteId;
         activeNoteIdRef.current = loadedNoteId;
 
         const content = parseContent(newContent, note);
+        if (isPageMode) {
+            content.appState = getOpenedAppState(content.appState, content.elements, isReload);
+        }
 
         loadData(api, content, theme);
 
@@ -394,8 +407,9 @@ export default function useCanvasPersistence(note: FNote, noteContext: NoteConte
 
             if (hasChanges) {
                 spacedUpdate.resetUpdateTimer();
-                // Excalidraw reports each move of a drag: the save waits until the pointer is up.
-                if (appState.cursorButton !== "down") {
+                // Excalidraw reports each move of a drag, and an insert space each frame of its
+                // preview: the save waits until the pointer is up.
+                if (appState.cursorButton !== "down" && !isPreviewingInsertSpace(apiRef.current)) {
                     spacedUpdate.scheduleUpdate();
                     currentSceneVersion.current = newSceneVersion;
                 }

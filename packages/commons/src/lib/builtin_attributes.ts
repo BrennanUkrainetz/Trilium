@@ -102,6 +102,12 @@ const BUILTIN_ATTRIBUTES = [
     { type: "label", name: "appThemeBase", valueType: "select", selectOptions: [
         "next", "next-light", "next-dark"
     ] },
+    // The rule lines a canvas note shows on its page.
+    { type: "label", name: "canvasRuleLines", valueType: "select", selectOptions: [
+        "narrow", "college", "wide"
+    ] },
+    // Shows a canvas note's drawing in its own colors on a white page, also in the dark theme.
+    { type: "label", name: "canvasPaper", valueType: "select", selectOptions: [ "white" ] },
     // Offers a font file note in the font picker, under the note's own title.
     { type: "label", name: "customFont", valueType: "boolean" },
     { type: "label", name: "hidePromotedAttributes", valueType: "boolean" },

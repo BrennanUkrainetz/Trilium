@@ -1,0 +1,30 @@
+.canvas-ink-toolbar {
+    display: contents;
+
+    .canvas-ink-toolbar-group {
+        --overlay-group-inset-top: calc(var(--sat, 0px) + 1rem);
+        z-index: 5;
+        pointer-events: auto;
+        max-width: calc(100% - 2 * var(--overlay-group-inset));
+        overflow-x: auto;
+    }
+
+    .canvas-ink-swatch {
+        display: block;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background-color: var(--canvas-ink-color);
+        box-shadow: 0 0 0 1px var(--main-border-color, #0000002e);
+    }
+}
+
+/* The embed's own toolbar holds the tools of a drawing in a text note until it is in fullscreen. */
+.include-note-content:not(:fullscreen) .canvas-ink-toolbar {
+    display: none;
+}
+
+.canvas-render:has(.canvas-ink-toolbar):not(.include-note-content:not(:fullscreen) .canvas-render)
+.excalidraw .App-toolbar-container {
+    visibility: hidden;
+}

@@ -1,0 +1,4 @@
+/* `setCursorForShape()` writes the cursor inline on the canvas, hence `!important`. */
+[data-pen-cursor] canvas.excalidraw__canvas.interactive {
+    cursor: var(--canvas-pen-cursor) !important;
+}

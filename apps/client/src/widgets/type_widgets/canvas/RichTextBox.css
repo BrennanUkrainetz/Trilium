@@ -1,0 +1,59 @@
+.excalidraw__embeddable-container__inner:has(.canvas-rich-text-box) {
+    overflow: visible;
+    align-items: flex-start;
+    justify-content: flex-start;
+
+    > .excalidraw__embeddable-hint {
+        display: none;
+    }
+}
+
+.canvas-rich-text-box {
+    position: relative;
+    width: 100%;
+    height: 100%;
+
+    .canvas-rich-text {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        box-sizing: border-box;
+        padding: 0 2px;
+        color: #1e1e1e;
+        font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+        /* Matches RICH_TEXT_FONT_SIZE and RICH_TEXT_LINE_HEIGHT in rich_text.ts. */
+        font-size: 20px;
+        line-height: 1.25;
+        overflow-wrap: anywhere;
+        white-space: pre-wrap;
+        outline: none;
+        cursor: inherit;
+
+        &.auto-width {
+            width: max-content;
+            max-width: 600px;
+        }
+
+        &.editing {
+            cursor: text;
+            box-shadow: 0 0 0 1px color-mix(in srgb, currentColor 25%, transparent);
+            border-radius: 2px;
+        }
+
+        p,
+        ul,
+        ol {
+            margin: 0;
+        }
+
+        ul,
+        ol {
+            padding-inline-start: 1.5em;
+        }
+    }
+}
+
+.excalidraw.theme--dark .canvas-rich-text {
+    filter: var(--theme-filter);
+}

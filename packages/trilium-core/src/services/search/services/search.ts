@@ -17,7 +17,7 @@ import {
 import type Expression from "../expressions/expression.js";
 import NoteSet from "../note_set.js";
 import {
-    ICON_TAG_RE, readIconClasses, readIconName
+    extractCanvasTexts, ICON_TAG_RE, readIconClasses, readIconName
 } from "../expressions/note_content_fulltext_preprocessor.js";
 import SearchContext from "../search_context.js";
 import SearchResult, { precomputeScoringTerms } from "../search_result.js";
@@ -608,6 +608,13 @@ function extractContentSnippet(noteId: string, searchTokens: HighlightedTokenInf
             content = unescapeHtml(content).replace(/&nbsp;/g, " ");
             // Nested blocks (`</p></li>`, `</p></details>`) end several lines at once; keep one.
             content = content.replace(/\n\s*\n/g, "\n");
+        } else if (note.type === "canvas") {
+            // The note stores the Excalidraw scene as JSON; show the text drawn on it, one
+            // element per line, rather than a cut of the JSON.
+            content = extractCanvasTexts(content).join("\n");
+            if (!content) {
+                return "";
+            }
         } else if (note.type === "llmChat") {
             // The note stores the whole conversation as a JSON blob; show the readable prose only.
             content = extractLlmChatText(content);

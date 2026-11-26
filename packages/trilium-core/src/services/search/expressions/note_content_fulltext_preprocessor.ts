@@ -1,3 +1,4 @@
+import { canvasRichTextToPlainText, getCanvasRichTextHtml } from "@triliumnext/commons/src/lib/canvas_rich_text.js";
 import { extractLlmChatText } from "@triliumnext/commons/src/lib/llm/extract_chat_text.js";
 import { extractSpreadsheetText } from "@triliumnext/commons/src/lib/spreadsheet/extract_text.js";
 import { normalizeSearchText } from "../utils/text_utils";
@@ -38,7 +39,7 @@ export default function preprocessContent(rawContent: string | Uint8Array, type:
     } else if (type === "mindMap" && mime === "application/json") {
         content = processMindmapContent(content);
     } else if (type === "canvas" && mime === "application/json") {
-        content = processCanvasContent(content);
+        content = processCanvasContent(originalContent);
     } else if (type === "spreadsheet" && mime === "application/json") {
         content = extractSpreadsheetText(content);
     } else if (type === "llmChat" && mime === "application/json") {
@@ -107,32 +108,69 @@ function processMindmapContent(content: string) {
     return normalizeSearchText(topicsString.toString());
 }
 
-function processCanvasContent(content: string) {
+/**
+ * The text a canvas shows, one entry per text element, rich text box or frame name, as the user typed it (case
+ * and line breaks kept). Shared by the search index and the result snippets.
+ */
+export function extractCanvasTexts(rawContent: string): string[] {
     interface Element {
-        type: string;
-        text?: string; // Optional since not all objects have a `text` property
-        id: string;
-        [key: string]: any; // Other properties that may exist
+        type?: string;
+        text?: unknown;
+        originalText?: unknown;
+        name?: unknown;
+        isDeleted?: boolean;
+        link?: string | null;
+        customData?: Record<string, unknown> | null;
     }
 
     let canvasContent;
     try {
-        canvasContent = JSON.parse(content);
+        canvasContent = JSON.parse(rawContent);
     } catch (e) {
-        return "";
+        return [];
     }
-    const elements = canvasContent.elements;
-
-    if (Array.isArray(elements)) {
-        const texts = elements
-            .filter((element: Element) => element.type === "text" && element.text) // Filter for 'text' type elements with a 'text' property
-            .map((element: Element) => element.text!); // Use `!` to assert `text` is defined after filtering
-
-        content = normalize(texts.join(" "));
-    } else {
-        content = "";
+    const elements = canvasContent?.elements;
+    if (!Array.isArray(elements)) {
+        return [];
     }
-    return content;
+
+    const texts: string[] = [];
+    for (const element of elements as (Element | null)[]) {
+        if (!element || element.isDeleted) {
+            continue;
+        }
+
+        if (element.type === "text") {
+            // `text` holds the lines as Excalidraw wraps them on screen, with a line break at
+            // each wrap, so a phrase that wraps would not match. `originalText` is what the user
+            // typed; older scenes may lack it.
+            const text = typeof element.originalText === "string" && element.originalText
+                ? element.originalText
+                : element.text;
+            if (typeof text === "string" && text.trim()) {
+                texts.push(text);
+            }
+        } else if ((element.type === "frame" || element.type === "magicframe") && typeof element.name === "string" && element.name.trim()) {
+            // Frame names act as section titles of a canvas.
+            texts.push(element.name);
+        }
+
+        const richTextHtml = getCanvasRichTextHtml(element);
+        if (richTextHtml) {
+            const text = canvasRichTextToPlainText(richTextHtml);
+            if (text) {
+                texts.push(text);
+            }
+        }
+    }
+
+    return texts;
+}
+
+function processCanvasContent(rawContent: string) {
+    // Parsed from the content as stored: normalize() lowercases, which would also rename the
+    // camel-cased keys (`originalText`, `isDeleted`) read above.
+    return normalize(extractCanvasTexts(rawContent).join(" ").replace(/\s+/g, " "));
 }
 
 /** Metadata attributes to index from link previews, in the order they are appended. */

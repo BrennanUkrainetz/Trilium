@@ -387,6 +387,18 @@ export interface OptionDefinitions extends KeyboardShortcutsOptions<KeyboardActi
     // Canvas settings
     /** Whether a new pen stroke on a canvas takes half the stroke width that is picked. */
     canvasThinStroke: boolean;
+    /** Whether a click on an empty spot of a canvas followed by typing puts text there, as in OneNote. */
+    canvasClickToType: boolean;
+    /** Whether the text of a canvas continues bullets and numbered lists on Enter, as in OneNote. */
+    canvasSmartLists: boolean;
+    /** Whether typing on an empty spot of a canvas creates a rich text box, which takes formatting. */
+    canvasRichText: boolean;
+    /** Whether a canvas shows the ink toolbar (pens, highlighter, eraser) instead of Excalidraw's shape toolbar. */
+    canvasInkToolbar: boolean;
+    /** Whether each finished pen stroke that reads as a line or a shape is replaced by that shape. */
+    canvasInkToShape: boolean;
+    /** Whether a canvas note has a top and a left edge, opens at the top, and shows a margin line on ruled pages. */
+    canvasPageMode: boolean;
 
     // Share settings
     redirectBareDomain: boolean;

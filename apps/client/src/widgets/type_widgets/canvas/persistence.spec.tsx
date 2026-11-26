@@ -72,6 +72,9 @@ vi.mock("@excalidraw/excalidraw", () => ({
         ({ ...element, ...updates, version: element.version + 1 })
 }));
 
+let isPreviewing = false;
+vi.mock("./insert_space", () => ({ isPreviewingInsertSpace: () => isPreviewing }));
+
 vi.stubGlobal("logError", vi.fn());
 vi.stubGlobal("logInfo", vi.fn());
 
@@ -99,12 +102,13 @@ type PersistenceProps = ReturnType<typeof useCanvasPersistence>;
 
 let props: PersistenceProps | undefined;
 
-function Probe({ note, apiRef, isReadOnly = false }: {
+function Probe({ note, apiRef, isReadOnly = false, isPageMode = false }: {
     note: FNote;
     apiRef: RefObject<ExcalidrawImperativeAPI | null>;
     isReadOnly?: boolean;
+    isPageMode?: boolean;
 }) {
-    props = useCanvasPersistence(note, null, apiRef, "light", isReadOnly);
+    props = useCanvasPersistence(note, null, apiRef, "light", isReadOnly, isPageMode);
     return null;
 }
 
@@ -164,9 +168,11 @@ describe("useCanvasPersistence content loading (#10279)", () => {
         vi.useRealTimers();
     });
 
-    async function mount(note: FNote, apiRef: RefObject<ExcalidrawImperativeAPI | null>) {
+    async function mount(
+        note: FNote, apiRef: RefObject<ExcalidrawImperativeAPI | null>, isPageMode = false
+    ) {
         await act(async () => {
-            render(<Probe note={note} apiRef={apiRef} />, container);
+            render(<Probe note={note} apiRef={apiRef} isPageMode={isPageMode} />, container);
         });
         // The blob resolves on a microtask after the first effect flush; a second act
         // cycle lets useNoteBlob's state update land and deliver the content.
@@ -269,6 +275,33 @@ describe("useCanvasPersistence content loading (#10279)", () => {
         // A note-switch load is scene initialization: it must never enter the undo store,
         // or undoing the first stroke would restore the previous note's scene (#7148).
         expect(updateScene.mock.calls[0][0]).toMatchObject({ captureUpdate: "NEVER" });
+    });
+
+    it("opens each note at the top of its page in page mode, at the saved zoom", async () => {
+        function buildPlacedNote(x: number, y: number) {
+            const note = buildNote({
+                title: "Canvas",
+                type: "canvas",
+                content: JSON.stringify({
+                    type: "excalidraw", version: 2, files: {},
+                    appState: { scrollX: -500, scrollY: -900, zoom: { value: 2 } },
+                    elements: [ { id: "r1", type: "rectangle", version: 1, x, y, width: 10, height: 10 } ]
+                })
+            });
+            note.getAttachmentsByRole = async () => [];
+            return note;
+        }
+        const { api, updateScene } = buildApi(() => []);
+        const apiRef = { current: api } as RefObject<ExcalidrawImperativeAPI | null>;
+
+        await mount(buildPlacedNote(100, 200), apiRef, true);
+        expect((await resolvedInitialData())?.appState)
+            .toMatchObject({ scrollX: 16, scrollY: 16, zoom: { value: 2 } });
+
+        // Content above and left of the origin moves the page edges out to it.
+        await mount(buildPlacedNote(-40, -30), apiRef, true);
+        expect(updateScene.mock.calls[0][0].appState)
+            .toMatchObject({ scrollX: 56, scrollY: 46, zoom: { value: 2 } });
     });
 
     it("stashes a subsequent note's content while the API is unavailable and replays it on arrival", async () => {
@@ -415,6 +448,35 @@ describe("useCanvasPersistence saves", () => {
         await waitFor(1500);
         expect(puts).toHaveLength(1);
         expect(JSON.parse(puts[0].data.content).elements).toMatchObject([ { version: 105 } ]);
+    });
+
+    it("saves none of the positions an insert space previews, nor a canceled one", async () => {
+        const { note, elements } = buildNoteWithPicture(PICTURE_TIME, PICTURE_TIME);
+        await mount(note);
+        sceneElements = elements;
+        change();
+
+        isPreviewing = true;
+        onTestFinished(() => {
+            isPreviewing = false;
+        });
+        for (const version of [ 100, 101 ]) {
+            sceneElements = [ { ...elements[0], version } ];
+            change();
+            await waitFor(1500);
+        }
+        expect(puts).toEqual([]);
+
+        isPreviewing = false;
+        sceneElements = elements;
+        change();
+        await waitFor(1500);
+        expect(puts).toEqual([]);
+
+        sceneElements = [ { ...elements[0], version: 102 } ];
+        change();
+        await waitFor(1500);
+        expect(JSON.parse(puts[0]?.data.content ?? "null")?.elements).toMatchObject([ { version: 102 } ]);
     });
 
     it("keeps the picture of a save made while it checks the loaded picture", async () => {

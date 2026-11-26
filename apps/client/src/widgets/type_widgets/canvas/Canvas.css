@@ -54,3 +54,99 @@
 .note-detail-canvas > .canvas-render {
   height: 100%;
 }
+
+.canvas-render {
+    position: relative;
+
+    .canvas-type-caret {
+        position: absolute;
+        width: 2px;
+        margin-left: -1px;
+        background-color: var(--main-text-color, currentColor);
+        pointer-events: none;
+        z-index: 3;
+        animation: canvas-type-caret-blink 1s steps(1) infinite;
+    }
+}
+
+@keyframes canvas-type-caret-blink {
+    50% {
+        opacity: 0;
+    }
+}
+
+.canvas-render[data-canvas-page="white"] {
+    background-color: #ffffff;
+    color: var(--main-text-color);
+}
+
+/* A white page renders in Excalidraw's light theme. In the dark theme of Trilium, the overlays on
+   it, Excalidraw's dialogs (portaled into `.excalidraw-modal-container`, which only a dark editor
+   marks `.theme--dark`) and the touch menu (`.canvas-white-page`) take the values of
+   `theme-next-light.css`. The variables that `:root` derives from these are declared again, since
+   they inherit as computed. */
+body.dark-theme :is(
+    .canvas-render[data-canvas-page="white"],
+    .excalidraw-modal-container:not(.theme--dark),
+    .canvas-white-page
+) {
+    color-scheme: light;
+
+    --main-background-color: white;
+    --main-text-color: black;
+    --main-border-color: #dbdbdb;
+    --muted-text-color: #666;
+    --accented-background-color: #f5f5f5;
+    --input-background-color: #00000012;
+    --input-focus-outline-color: #00000063;
+    --hover-item-text-color: black;
+    --hover-item-background-color: #0000001a;
+    --active-item-background-color: #ddd;
+    --active-item-text-color: #383838;
+    --dropdown-border-color: #ccc;
+    --dropdown-shadow-opacity: 0.2;
+    --dropdown-item-icon-destructive-color: #de4027;
+    --menu-text-color: #272727;
+    --menu-background-color: #ffffffd9;
+    --menu-background-color-no-backdrop: #fdfdfd;
+    --menu-item-icon-color: #727272;
+    --menu-item-disabled-opacity: 0.6;
+    --menu-item-keyboard-shortcut-color: #666666a8;
+    --menu-item-delimiter-color: #00000030;
+    --menu-item-group-header-color: #00000061;
+    --badge-background-color: #00000011;
+    --badge-text-color: var(--muted-text-color);
+    --card-background-color: #0000000d;
+    --card-background-hover-color: #0000001c;
+    --more-accented-background-color: var(--card-background-hover-color);
+    --floating-button-background-color: #eaeaeacc;
+    --floating-button-shadow-color: #00000042;
+    --icon-button-hover-background: var(--hover-item-background-color);
+    --opaque-icon-button-background: #e6e6e6d7;
+    --opaque-icon-button-hover-background-color: #cbcbcbd7;
+    --overlay-button-background: var(--opaque-icon-button-background);
+    --ck-editor-toolbar-button-on-background: #00000030;
+    --ck-editor-toolbar-button-on-color: black;
+    --bs-body-color: var(--main-text-color);
+    --bs-body-bg: var(--main-background-color);
+}
+
+/* Stacks over Excalidraw's static canvas (`--zIndex-canvas`), which paints the background color,
+   and under its interactive canvas, embeddables and UI. */
+.canvas-render[data-rule-lines]::after {
+    --canvas-rule-color: #b4c6dc;
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    mix-blend-mode: multiply;
+    background-image: linear-gradient(to bottom, transparent calc(var(--canvas-rule-size, 25px) - 1px), var(--canvas-rule-color) 0);
+    background-size: 100% var(--canvas-rule-size, 25px);
+    background-position: 0 var(--canvas-rule-offset, 0);
+}
+
+.canvas-render[data-rule-lines]:has(.excalidraw.theme--dark)::after {
+    --canvas-rule-color: #44526a;
+    mix-blend-mode: screen;
+}

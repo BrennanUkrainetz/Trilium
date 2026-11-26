@@ -91,7 +91,7 @@ function tooltipDirectionFor(placement: OverlayPlacement | undefined, vertical: 
     return placement?.startsWith("top-") ? "bottom" : "top";
 }
 
-interface OverlayControlButtonProps extends Pick<HTMLAttributes<HTMLButtonElement>, "onClick" | "aria-label"> {
+interface OverlayControlButtonProps extends Pick<HTMLAttributes<HTMLButtonElement>, "onClick" | "aria-label" | "aria-pressed"> {
     /** What the button does, said on hover. Where the button wears nothing to read, it is its name too. */
     title?: string;
     /** The boxicons name of the mark it wears (`bx-plus-circle`). */

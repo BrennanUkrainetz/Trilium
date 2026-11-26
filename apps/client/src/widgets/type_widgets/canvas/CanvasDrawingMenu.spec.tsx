@@ -8,8 +8,17 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const MainMenu = vi.hoisted(() => Object.assign(
     ({ children }: { children: ComponentChildren }) => <div className="menu">{children}</div>,
     {
-        Item: ({ onSelect, children }: { onSelect: () => void; children: ComponentChildren }) => (
-            <button type="button" onClick={onSelect}>{children}</button>
+        Item: ({ onSelect, children, selected, className }: {
+            onSelect: () => void; children: ComponentChildren; selected?: boolean; className?: string;
+        }) => (
+            <button
+                type="button"
+                className={[ className, selected && "selected" ].filter(Boolean).join(" ") || undefined}
+                onClick={onSelect}
+            >{children}</button>
+        ),
+        Group: ({ title, children }: { title: string; children: ComponentChildren }) => (
+            <section data-title={title}>{children}</section>
         ),
         Separator: () => <hr />,
         DefaultItems: Object.fromEntries([
@@ -85,5 +94,42 @@ describe("CanvasNoteMenu", () => {
             "LoadScene", "SaveAsImage", "SearchMenu", "Help", "ClearCanvas",
             "ChangeCanvasBackground"
         ]);
+    });
+
+    it("offers the rule lines of a note that can change, marking the current ones", async () => {
+        const container = document.createElement("div");
+        const onRuleLinesChange = vi.fn();
+        await act(async () => {
+            render(<CanvasNoteMenu ruleLines="college" onRuleLinesChange={onRuleLinesChange} />, container);
+        });
+        const buttons = [ ...container.querySelectorAll<HTMLButtonElement>("section button") ];
+        const selected = [ ...container.querySelectorAll("section button.selected") ];
+
+        expect(buttons).toHaveLength(4);
+        expect(selected).toEqual([ buttons[2] ]);
+        buttons[0]?.click();
+        buttons[3]?.click();
+        expect(onRuleLinesChange.mock.calls).toEqual([ [ null ], [ "wide" ] ]);
+        render(null, container);
+    });
+
+    it("toggles the white page of a note that can change", async () => {
+        const container = document.createElement("div");
+        const onPaperChange = vi.fn();
+        await act(async () => {
+            render(<CanvasNoteMenu paper="white" onPaperChange={onPaperChange} />, container);
+        });
+        const button = container.querySelector<HTMLButtonElement>("button.canvas-paper-white");
+        expect(button?.classList.contains("selected")).toBe(true);
+        button?.click();
+
+        await act(async () => {
+            render(<CanvasNoteMenu paper={null} onPaperChange={onPaperChange} />, container);
+        });
+        const unselected = container.querySelector<HTMLButtonElement>("button.canvas-paper-white");
+        expect(unselected?.classList.contains("selected")).toBe(false);
+        unselected?.click();
+        expect(onPaperChange.mock.calls).toEqual([ [ null ], [ "white" ] ]);
+        render(null, container);
     });
 });

@@ -38,15 +38,60 @@ export default function OtherSettings() {
 
 function CanvasSettings() {
     const [ isThinStroke, setThinStroke ] = useTriliumOptionBool("canvasThinStroke");
+    const [ isClickToType, setClickToType ] = useTriliumOptionBool("canvasClickToType");
+    const [ isSmartLists, setSmartLists ] = useTriliumOptionBool("canvasSmartLists");
+    const [ isRichText, setRichText ] = useTriliumOptionBool("canvasRichText");
+    const [ isInkToolbar, setInkToolbar ] = useTriliumOptionBool("canvasInkToolbar");
+    const [ isPageMode, setPageMode ] = useTriliumOptionBool("canvasPageMode");
 
     return (
         <Card heading={t("note_types.canvas")}>
+            <OptionCardSection
+                name="canvas-ink-toolbar"
+                label={t("canvas.ink_toolbar_option")}
+                description={t("canvas.ink_toolbar_option_description")}
+            >
+                <FormToggle currentValue={isInkToolbar} onChange={setInkToolbar} />
+            </OptionCardSection>
+
+            <OptionCardSection
+                name="canvas-page-mode"
+                label={t("canvas.page_mode_option")}
+                description={t("canvas.page_mode_option_description")}
+            >
+                <FormToggle currentValue={isPageMode} onChange={setPageMode} />
+            </OptionCardSection>
+
             <OptionCardSection
                 name="canvas-thin-stroke"
                 label={t("canvas.thin_stroke")}
                 description={t("canvas.thin_stroke_description")}
             >
                 <FormToggle currentValue={isThinStroke} onChange={setThinStroke} />
+            </OptionCardSection>
+
+            <OptionCardSection
+                name="canvas-click-to-type"
+                label={t("canvas.click_to_type")}
+                description={t("canvas.click_to_type_description")}
+            >
+                <FormToggle currentValue={isClickToType} onChange={setClickToType} />
+            </OptionCardSection>
+
+            <OptionCardSection
+                name="canvas-rich-text"
+                label={t("canvas.rich_text")}
+                description={t("canvas.rich_text_description")}
+            >
+                <FormToggle currentValue={isRichText} onChange={setRichText} />
+            </OptionCardSection>
+
+            <OptionCardSection
+                name="canvas-smart-lists"
+                label={t("canvas.smart_lists")}
+                description={t("canvas.smart_lists_description")}
+            >
+                <FormToggle currentValue={isSmartLists} onChange={setSmartLists} />
             </OptionCardSection>
         </Card>
     );

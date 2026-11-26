@@ -1,0 +1,6 @@
+.canvas-render .canvas-rich-text-toolbar {
+    --overlay-group-inset: 0.75rem;
+    --overlay-group-inset-bottom: calc(var(--sab, 0px) + 4rem);
+    /* Above Excalidraw's layers, of which the embeddables are at 2. */
+    z-index: 4;
+}

@@ -370,6 +370,12 @@ const defaultOptions: DefaultOption[] = [
 
     // Canvas settings
     { name: "canvasThinStroke", value: "true", isSynced: true },
+    { name: "canvasClickToType", value: "true", isSynced: true },
+    { name: "canvasSmartLists", value: "true", isSynced: true },
+    { name: "canvasRichText", value: "true", isSynced: true },
+    { name: "canvasInkToolbar", value: "true", isSynced: true },
+    { name: "canvasInkToShape", value: "false", isSynced: true },
+    { name: "canvasPageMode", value: "true", isSynced: true },
 
     // Share settings
     { name: "redirectBareDomain", value: "false", isSynced: true },

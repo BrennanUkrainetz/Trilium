@@ -271,5 +271,11 @@
   },
   "editorfeatures": {
     "scroll_rail_highlights_description": "Show coloured marks on the scrollbar so you can see where text is highlighted in the note."
+  },
+  "canvas": {
+    "touch_menu": {
+      "default_color": "Default colour"
+    },
+    "ink_toolbar_option_description": "Shows a simple draw bar with a pen, quick colours, a highlighter, an eraser and basic shapes instead of Excalidraw's shape toolbar."
   }
 }

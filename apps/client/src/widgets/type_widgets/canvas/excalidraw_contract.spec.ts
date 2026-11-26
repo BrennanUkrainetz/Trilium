@@ -425,6 +425,46 @@ describe("Excalidraw contract of the canvas drawing", () => {
             ".excalidraw canvas"
         ]);
     });
+
+    it("renders the groups of the properties panel that `InkProperties.css` hides for ink", () => {
+        const source = readBundle(developmentDir, [ ".js" ]).replace(/\s+/g, "");
+        const styles = readFileSync(join(__dirname, "InkProperties.css"), "utf8");
+        const testIds = [ ...styles.matchAll(/data-testid="([^"]+)"/g) ].map((match) => match[1]);
+        expect(testIds).toEqual([ "color-top-pick-transparent", "fill-hachure" ]);
+        const production = readBundle(productionDir, [ ".js", ".css" ]);
+        const missing = [ ...new Set([ ...styles.matchAll(/\.(-?[_a-zA-Z][\w-]*)/g) ]
+            .map((match) => match[1])) ]
+            .filter((name) => name !== "canvas-render")
+            .filter((name) => !new RegExp(`(?<![\\w-])${name}(?![\\w-])`).test(production));
+        expect(missing).toEqual([]);
+
+        // `hasBackground()` takes a pen stroke, which shows the groups that the stylesheet hides.
+        expect(source).toMatch(/varhasBackground=\(type\)=>[^;]*type==="freedraw";/);
+        const panel = source.split("varSelectedShapeActions=(")[1]?.split("varShapesSwitcher=")[0]
+            ?? "";
+        expect(panel).toContain("canChangeBackgroundColor(appState,targetElements)"
+            + "&&/*@__PURE__*/jsx70(\"div\",{children:renderAction(\"changeBackgroundColor\")}),"
+            + "showFillIcons&&renderAction(\"changeFillStyle\"),");
+        // The alignment follows the layers, and is the only group with a `flexBasis`.
+        expect(panel).toContain("renderAction(\"bringToFront\")]})]}),"
+            + "showAlignActions&&!isSingleElementBoundContainer&&/*@__PURE__*/jsxs39(\"fieldset\","
+            + "{children:[/*@__PURE__*/jsx70(\"legend\",{children:t(\"labels.align\")}),");
+        expect(source.split("flexBasis:").length - 1).toBe(1);
+        expect(panel).toContain("jsx70(\"div\",{style:{flexBasis:\"100%\",height:0}})");
+
+        // Only the background's top picks offer `transparent`, and the fill names its buttons.
+        expect(source).toContain("varDEFAULT_ELEMENT_BACKGROUND_PICKS=[COLOR_PALETTE.transparent,");
+        expect(source).toContain("varCOLOR_PALETTE={transparent:\"transparent\",");
+        const strokePicks = source.split("varDEFAULT_ELEMENT_STROKE_PICKS=[")[1]?.split("];")[0];
+        expect(strokePicks).not.toContain("transparent");
+        expect(source).toContain("\"data-testid\":`color-top-pick-${color}`");
+        expect(source).toContain("testId:`fill-hachure`");
+        // Each button of the layers carries the class that the stylesheet finds the group by.
+        for (const name of [ "sendToBack", "sendBackward", "bringForward", "bringToFront" ]) {
+            const action = source.split(`name:"${name}",`)[1]?.split("});")[0] ?? "";
+            expect(action, name).toContain("className:\"zIndexButton\"");
+        }
+    });
 });
 
 /** The text of the scripts or stylesheets in `dir`, without its locales and fonts. */

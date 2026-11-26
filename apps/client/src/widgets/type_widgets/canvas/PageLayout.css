@@ -1,0 +1,33 @@
+/* Stacks over Excalidraw's static canvas and the rule lines (`z-index: 1` in `Canvas.css`), and
+   under its interactive canvas, which comes later at `--zIndex-interactiveCanvas` (2). */
+.canvas-render[data-page-layout]::before {
+    --canvas-margin-color: transparent;
+    --canvas-page-edge-color: rgb(0 0 0 / 7%);
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    pointer-events: none;
+    mix-blend-mode: multiply;
+    background-image:
+        linear-gradient(var(--canvas-margin-color), var(--canvas-margin-color)),
+        linear-gradient(to bottom, var(--canvas-page-edge-color), transparent);
+    background-repeat: no-repeat;
+    background-size: 1px 100%, 100% 10px;
+    background-position:
+        var(--canvas-margin-x, 64px) 0,
+        0 var(--canvas-page-top, 0);
+}
+
+.canvas-render[data-page-layout][data-rule-lines]::before {
+    --canvas-margin-color: #e8a3a3;
+}
+
+.canvas-render[data-page-layout]:not([data-canvas-page="white"]):has(.excalidraw.theme--dark)::before {
+    --canvas-page-edge-color: rgb(255 255 255 / 6%);
+    mix-blend-mode: screen;
+}
+
+.canvas-render[data-page-layout][data-rule-lines]:not([data-canvas-page="white"]):has(.excalidraw.theme--dark)::before {
+    --canvas-margin-color: #6e3a3a;
+}

@@ -1530,6 +1530,16 @@ describe("Search", () => {
             expect(searchService.extractContentSnippet(snippetNote("llmChat", chat), [ "hello" ])).toBe("hello assistant");
         });
 
+        it("shows the text drawn on a canvas instead of its JSON", () => {
+            const scene = JSON.stringify({ elements: [
+                { type: "rectangle", id: "r" },
+                { type: "text", text: "Quarterly\nplan", originalText: "Quarterly plan" }
+            ] });
+
+            expect(searchService.extractContentSnippet(snippetNote("canvas", scene), [ "plan" ])).toBe("Quarterly plan");
+            expect(searchService.extractContentSnippet(snippetNote("canvas", "{\"elements\":[]}"), [ "x" ])).toBe("");
+        });
+
         it("keeps link previews without data attributes and icons without a name out of the text", () => {
             const noteId = snippetNote("text", `<p>before</p><section class="link-embed"></section>`
                 + `<p>icon <span class="tn-icon"></span> after</p>`);

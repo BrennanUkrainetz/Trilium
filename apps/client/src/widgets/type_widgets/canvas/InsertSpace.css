@@ -1,0 +1,50 @@
+/* `setCursorForShape()` writes the cursor inline on the canvas, hence `!important`. */
+[data-insert-space] canvas.excalidraw__canvas.interactive {
+    cursor: row-resize !important;
+}
+
+.canvas-insert-space {
+    --canvas-insert-space-color: var(--main-text-color, #1e1e1e);
+
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    overflow: hidden;
+    pointer-events: none;
+
+    .canvas-insert-space-line {
+        position: absolute;
+        left: 0;
+        right: 0;
+        height: 0;
+        border-top: 2px solid var(--canvas-insert-space-color);
+
+        &.current {
+            border-top-style: dashed;
+        }
+
+        .bx {
+            position: absolute;
+            left: 50%;
+            top: 0;
+            transform: translate(-50%, -50%);
+            padding: 2px;
+            border-radius: 50%;
+            background: var(--main-background-color, #fff);
+            color: var(--canvas-insert-space-color);
+            font-size: 20px;
+            box-shadow: 0 0 0 1px var(--canvas-insert-space-color);
+        }
+    }
+
+    .canvas-insert-space-band {
+        position: absolute;
+        left: 0;
+        right: 0;
+        background: color-mix(in srgb, var(--canvas-insert-space-color) 8%, transparent);
+
+        &.removing {
+            background: color-mix(in srgb, var(--canvas-insert-space-color) 16%, transparent);
+        }
+    }
+}
